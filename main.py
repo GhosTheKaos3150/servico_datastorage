@@ -81,11 +81,7 @@ def add_data():
         save_data.to_csv(path.abspath(path.curdir) + '/data.csv')
         info.to_csv(path.abspath(path.curdir) + '/info.csv')
 
-<<<<<<< HEAD
     os.chdir('../../../../servico_datastorage')
-=======
-        os.chdir('../../../../servico_recepcao_dados')
->>>>>>> bd66da51813c4d99de6c1eb2a55973d3f4fc59b7
 
     return {
         'response': 'OK',
