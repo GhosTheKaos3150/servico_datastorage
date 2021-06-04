@@ -80,7 +80,7 @@ def add_data():
     save_data.to_csv(path.abspath(path.curdir) + '/data.csv')
     info.to_csv(path.abspath(path.curdir) + '/info.csv')
 
-    os.chdir('../../../../servico_recepcao_dados')
+    os.chdir('../../../../servico_datastorage')
 
     return {
         'response': 'OK',
