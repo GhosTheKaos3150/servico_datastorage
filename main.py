@@ -69,6 +69,12 @@ def add_data():
         info = pd.DataFrame(data=info)
 
         save_data = obj_data['value']
+        save_data = {
+            'x': [save_data['x']],
+            'y': [save_data['y']],
+            'z': [save_data['z']],
+        }
+
         save_data = pd.DataFrame(data=save_data, columns=['x', 'y', 'z'])
         save_data['id'] = save_data.index
         save_data['date'] = obj_data['when']
