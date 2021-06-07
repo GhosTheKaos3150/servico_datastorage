@@ -33,7 +33,7 @@ def add_data():
     for value in data:
         obj_id = value['deviceId']
         obj_data = value['value']
-        obj_date_att = value['when']
+        obj_date_att = dtt.strptime(value['when'], '%Y-%m-%dT%H:%M:%S.%fZ').date()
 
         network = obj_data['network']
 
@@ -87,7 +87,7 @@ def add_data():
         save_data.to_csv(path.abspath(path.curdir) + '/data.csv')
         info.to_csv(path.abspath(path.curdir) + '/info.csv')
 
-    os.chdir('../../../../servico_datastorage')
+        os.chdir('../../../../servico_datastorage')
 
     return {
         'response': 'OK',
