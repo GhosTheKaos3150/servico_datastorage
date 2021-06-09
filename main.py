@@ -1,6 +1,7 @@
 import os
 import os.path as path
 import requests
+import pymongo
 from datetime import datetime as dtt
 
 import pandas as pd
@@ -8,6 +9,7 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
+# [
 # {
 #     "_id": "60b14ed3f34a4b001d688a10",
 #     "geminiId": "1",
@@ -17,12 +19,13 @@ app = Flask(__name__)
 #         "dType": "Tag",
 #         "pType": "dwm1001",
 #         "network": "casa",
-#         "value": "{\"x\":7.803216,\"y\":0.38016921,\"z\":1.4939197,\"q\":91}",
+#         "value": {"x":7.803216,"y":0.38016921,"z":1.4939197,"q":91},
 #         "unit": "m",
 #         "when": "2021-05-28T20:13:07.323Z"
 #     },
 #     "when": "2021-05-28T20:13:07.323Z"
-# }
+# },
+# (...)]
 
 
 @app.route('/add_data', methods=['POST'])
@@ -88,6 +91,85 @@ def add_data():
         info.to_csv(path.abspath(path.curdir) + '/info.csv')
 
         os.chdir('../../../../servico_datastorage')
+
+    return {
+        'response': 'OK',
+        'status': 200
+    }
+
+
+@app.route('/iadd_data', methods=['POST'])
+def iadd_data():
+
+    # MongoDB - Formato do Documento
+    # {
+    #   "network": <network>,
+    #   "last_update": <att>,
+    #   "objects" : [{
+    #       "id": <id>,
+    #       "dates": [{
+    #           "date": <date>,
+    #           "data": [{
+    #               "index": 0,
+    #               "id": <id>,
+    #               "x": 0,
+    #               "y": 0,
+    #               "z": 0,
+    #               "date": <date>
+    #           }, (...) ]
+    #       }, (...) ]
+    #   }, (...) ]
+    # }
+
+    json = request.json
+
+    client = pymongo.MongoClient('mongodb://0.0.0.0:28016')
+    database = client['viasoluti-database']
+    col = database['data']
+
+    for value in json:
+        device_id = value['deviceId']
+        att = dtt.strptime(value['when'], '%Y-%m-%dT%H:%M:%S.%fZ').date()
+        d_value = value['value']
+
+        data = d_value['value']
+        date = d_value['when']
+        network = d_value['network']
+
+        doc = col.find({"network": network})
+
+        if doc is None:
+            col.insert_one(
+                {
+                  "network": network,
+                  "last_update": att,
+                  "objects": [{
+                      "id": device_id,
+                      "dates": [{
+                          "date": date,
+                          "data": data
+                      }]
+                  }]
+                }
+            )
+
+        else:
+            query = {"network": network}
+
+            d = doc['objects']
+            mod = False
+            for val in d:
+                if val['id'] == device_id:
+                    d = val['dates']
+                    mod = True
+
+            # TODO querry de data
+
+            att = {'$set': {
+                "last_update": att
+            }}
+
+            col.update_one(query, att)
 
     return {
         'response': 'OK',
