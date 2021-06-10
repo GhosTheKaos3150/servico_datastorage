@@ -102,6 +102,7 @@ def add_data():
 def iadd_data():
 
     # MongoDB - Formato do Documento
+    #
     # {
     #   "network": <network>,
     #   "last_update": <att>,
@@ -123,51 +124,91 @@ def iadd_data():
 
     json = request.json
 
-    client = pymongo.MongoClient('mongodb://0.0.0.0:28016')
+    client = pymongo.MongoClient('mongodb://0.0.0.0:27017')
     database = client['viasoluti-database']
     col = database['data']
 
     for value in json:
         device_id = value['deviceId']
-        att = dtt.strptime(value['when'], '%Y-%m-%dT%H:%M:%S.%fZ').date()
+        att = dtt.now()
         d_value = value['value']
 
         data = d_value['value']
-        date = d_value['when']
+        date = dtt.strptime(d_value['when'], '%Y-%m-%dT%H:%M:%S.%fZ')
         network = d_value['network']
 
-        doc = col.find({"network": network})
+        doc = col.find_one({"network": network})
 
         if doc is None:
             col.insert_one(
                 {
                   "network": network,
-                  "last_update": att,
                   "objects": [{
                       "id": device_id,
                       "dates": [{
-                          "date": date,
-                          "data": data
+                          "date": date.date().strftime('%Y-%m-%d'),
+                          "data": [data]
                       }]
                   }]
                 }
             )
 
         else:
-            query = {"network": network}
 
-            d = doc['objects']
-            mod = False
-            for val in d:
+            t_obj = doc['objects']
+            copy_tobj = t_obj.copy()
+            obj = t_obj[0]
+            
+            for o in copy_tobj:
+                if o['id'] == device_id:
+                    obj = o
+                    break
+            
+            print(t_obj)
+            print(obj)
+            
+            d = []
+            for v in obj['dates']:
+                if v['date'] == date.date().strftime('%Y-%m-%d'):
+                    d = v['data']
+
+            d.append(data)
+            
+            n_obj = {
+                  "id": device_id,
+                  "dates": []
+            }
+            
+            for dx in obj['dates']:
+                if dx['date'] == date.date().strftime('%Y-%m-%d'):
+                    dx['data'] = d
+                    n_obj['dates'].append(d)
+                else:
+                    n_obj['dates'].append(d)
+
+            print(n_obj)
+
+            nt_obj = []
+            for val in t_obj:
                 if val['id'] == device_id:
-                    d = val['dates']
-                    mod = True
+                    nt_obj.append(n_obj)
+                else:
+                    nt_obj.append(val)
 
-            # TODO querry de data
+            print(nt_obj)
+
+            query = {
+                "network": network,
+                "objects": t_obj
+            }
+            
+            print(col.find_one(query))
+            print(t_obj)
 
             att = {'$set': {
-                "last_update": att
-            }}
+                    'objects': nt_obj
+                }
+            }
 
             col.update_one(query, att)
 
