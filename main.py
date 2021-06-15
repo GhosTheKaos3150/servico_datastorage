@@ -169,6 +169,60 @@ def add_data():
     }
 
 
+@app.route('/repair', methods=['GET'])
+def repair_data():
+    # MongoDB - Formato do Documento
+    #
+    # {
+    #   "network": <network>,
+    #   "last_update": <att>,
+    #   "data": [{
+    #       "id": <id>,
+    #       "x": 0,
+    #       "y": 0,
+    #       "z": 0,
+    #       "date": <date>
+    #    }, (...) ]
+    #   }, (...) ]
+    # }
+
+    client = pymongo.MongoClient('mongodb://0.0.0.0:27017')
+    database = client['viasoluti-database']
+    col = database['data']
+
+    main_dir = path.abspath(path.curdir)
+    os.chdir('..')
+
+    data_dir = path.abspath(path.curdir)
+    if not 'data' in os.listdir(path.abspath(path.curdir)):
+        return {
+            'result': 'REPAIR DATA NOT FOUND',
+            'status': 404
+        }
+
+    os.chdir('data')
+    for env in os.listdir(path.abspath(path.curdir)):
+        os.chdir(env)
+        env_dir = path.abspath(path.curdir)
+
+        for obj in os.listdir(env_dir):
+            os.chdir(obj)
+
+            #TODO Captar e mandas os dados pro Mongo
+
+            # retornando
+            os.chdir(env_dir)
+
+        os.chdir(data_dir)
+
+    os.chdir(main_dir)
+
+    return {
+        'result': 'OK',
+        'status': 200
+    }
+
+
 @app.route('/get/id=<_id>&date=<date>')
 def get_data(_id, date):
 
