@@ -1,6 +1,5 @@
-import os
+import os, shutil
 import os.path as path
-import requests
 import pymongo
 from datetime import datetime as dtt
 
@@ -141,7 +140,7 @@ def add_data():
             col.insert_one(
                 {
                     "network": network,
-                    "last_update": att,
+                    "last_update": att.strftime('%Y-%m-%d %H:%M:%S'),
                     "data": [data]
                 }
             )
@@ -156,8 +155,8 @@ def add_data():
             }
 
             update = {'$set': {
-                "last_update": att.strftime('%Y-%m-%d %H:%M:%S'),
-                "data": prev_data
+                    "last_update": att.strftime('%Y-%m-%d %H:%M:%S'),
+                    "data": prev_data
                 }
             }
 
@@ -190,32 +189,10 @@ def repair_data():
     database = client['viasoluti-database']
     col = database['data']
 
-    main_dir = path.abspath(path.curdir)
-    os.chdir('..')
+    doc = col.find_one({"network": 'casa'})
 
-    data_dir = path.abspath(path.curdir)
-    if not 'data' in os.listdir(path.abspath(path.curdir)):
-        return {
-            'result': 'REPAIR DATA NOT FOUND',
-            'status': 404
-        }
-
-    os.chdir('data')
-    for env in os.listdir(path.abspath(path.curdir)):
-        os.chdir(env)
-        env_dir = path.abspath(path.curdir)
-
-        for obj in os.listdir(env_dir):
-            os.chdir(obj)
-
-            #TODO Captar e mandas os dados pro Mongo
-
-            # retornando
-            os.chdir(env_dir)
-
-        os.chdir(data_dir)
-
-    os.chdir(main_dir)
+    for value in doc['data']:
+        print(type(value[0]))
 
     return {
         'result': 'OK',
