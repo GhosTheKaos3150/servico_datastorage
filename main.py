@@ -1,6 +1,5 @@
-import os
+import os, shutil
 import os.path as path
-import requests
 import pymongo
 from datetime import datetime as dtt
 
@@ -141,7 +140,7 @@ def add_data():
             col.insert_one(
                 {
                     "network": network,
-                    "last_update": att,
+                    "last_update": att.strftime('%Y-%m-%d %H:%M:%S'),
                     "data": [data]
                 }
             )
@@ -156,8 +155,8 @@ def add_data():
             }
 
             update = {'$set': {
-                "last_update": att.strftime('%Y-%m-%d %H:%M:%S'),
-                "data": prev_data
+                    "last_update": att.strftime('%Y-%m-%d %H:%M:%S'),
+                    "data": prev_data
                 }
             }
 
@@ -193,7 +192,6 @@ def repair_data():
     main_dir = path.abspath(path.curdir)
     os.chdir('..')
 
-    data_dir = path.abspath(path.curdir)
     if not 'data' in os.listdir(path.abspath(path.curdir)):
         return {
             'result': 'REPAIR DATA NOT FOUND',
@@ -201,19 +199,59 @@ def repair_data():
         }
 
     os.chdir('data')
+    data_dir = path.abspath(path.curdir)
     for env in os.listdir(path.abspath(path.curdir)):
         os.chdir(env)
         env_dir = path.abspath(path.curdir)
 
+        doc = col.find_one({"network": env})
+
         for obj in os.listdir(env_dir):
             os.chdir(obj)
+            obj_dir = path.abspath(path.curdir)
 
-            #TODO Captar e mandas os dados pro Mongo
+            for date in os.listdir(obj_dir):
+                os.chdir(date)
+
+                data = pd.read_csv('data.csv')
+                data['id'] = obj
+
+                data = data.to_numpy().tolist()
+
+                # atualizando no Database
+                if doc is None:
+                    col.insert_one(
+                        {
+                            "network": env,
+                            "last_update": dtt.now().strftime('%Y-%m-%d %H:%M:%S'),
+                            "data": [data]
+                        }
+                    )
+
+                else:
+
+                    prev_data = data
+                    prev_data.append(doc['data'])
+
+                    query = {
+                        "network": env,
+                    }
+
+                    update = {'$set': {
+                            "last_update": dtt.now().strftime('%Y-%m-%d %H:%M:%S'),
+                            "data": prev_data
+                        }
+                    }
+
+                    col.update_one(query, update)
+
+                os.chdir(obj_dir)
 
             # retornando
             os.chdir(env_dir)
 
         os.chdir(data_dir)
+        shutil.rmtree(data_dir)
 
     os.chdir(main_dir)
 
