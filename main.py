@@ -102,7 +102,7 @@ def get_data():
     json = request.json
     env = json['env']
     _id = json['id']
-    date = dtt.strptime(json['date'], '%Y-%m-%d')
+    date = json['date']
 
     if not type(env) is str:
         return make_response({
@@ -122,6 +122,8 @@ def get_data():
             "type": "NOT ACCEPTABLE",
             "what": "date format is not allowed".upper(),
         }, 406)
+
+    date = dtt.strptime(date, '%Y-%m-%d')
 
     client = pymongo.MongoClient('mongodb://0.0.0.0:27017')
     database = client['viasoluti-database']
