@@ -123,7 +123,7 @@ def get_data():
             "what": "date format is not allowed".upper(),
         }, 406)
 
-    date = dtt.strptime(date, '%Y-%m-%d')
+    date = dtt.strptime(date, '%Y-%m-%d').date()
 
     client = pymongo.MongoClient('mongodb://0.0.0.0:27017')
     database = client['viasoluti-database']
