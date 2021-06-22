@@ -98,8 +98,13 @@ def add_data():
     }
 
 
-@app.route('/get/env=<env>&id=<_id>&date=<date>')
-def get_data(env, _id, date):
+@app.route('/get')
+def get_data():
+    
+    json = request.json
+    env = json['env']
+    _id = json['id']
+    date = json['date']
 
     client = pymongo.MongoClient('mongodb://0.0.0.0:27017')
     database = client['viasoluti-database']
@@ -109,16 +114,41 @@ def get_data(env, _id, date):
         "network": env
     })
 
+    if doc is None:
+        return {
+            "response": "NOT FOUND",
+            "what": "on enviroment".upper(),
+            "status": 404
+        }
+    else:
+        print(doc)
+
     info = pd.DataFrame(doc['objects'])
     info = info.loc[info['id'] == _id]
+    
+    if info.empty:
+        return {
+            "response": "NOT FOUND",
+            "what": "on id".upper(),
+            "status": 404
+        }
+    
     info = info['dates'].tolist()[0]
 
     data_by_date = pd.DataFrame(info)
     data_by_date = data_by_date.loc[data_by_date['date'] == date]
+    
+    if data_by_date.empty:
+        return {
+            "response": "NOT FOUND",
+            "what": "on date".upper(),
+            "status": 404
+        }
+    
     data = data_by_date['data'].tolist()[0]
 
     return {
-        "responde": "OK",
+        "response": "OK",
         "status": 200,
         "data": data
     }
