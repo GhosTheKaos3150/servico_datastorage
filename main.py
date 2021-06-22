@@ -2,7 +2,7 @@ import os, shutil
 import os.path as path
 import pymongo
 import re
-from datetime import datetime as dtt
+from datetime import datetime as dtt, date as dt
 
 import pandas as pd
 from flask import Flask, request, make_response
@@ -123,7 +123,7 @@ def get_data():
             "what": "date format is not allowed".upper(),
         }, 406)
 
-    # date = dtt.strptime(date, '%Y-%m-%d').date()
+    date = dt.fromisoformat(date)
 
     client = pymongo.MongoClient('mongodb://0.0.0.0:27017')
     database = client['viasoluti-database']
