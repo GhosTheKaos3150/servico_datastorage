@@ -133,8 +133,6 @@ def get_data():
         "network": env
     })
 
-    print(doc)
-
     if doc is None:
         return make_response({
             "type": "NOT FOUND",
@@ -161,6 +159,7 @@ def get_data():
         }, 404)
 
     data = info.to_dict('records')
+    print(data)
 
     return make_response({
         "type": "OK",
