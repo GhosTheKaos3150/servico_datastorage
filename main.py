@@ -148,7 +148,7 @@ def get_data():
             "what": "on id".upper(),
         }, 404)
 
-    info = info.loc[info['date'].dt.date() == date]
+    info = info.loc[date in info['date'].dt.strftime(format="%Y-%m-%d")]
     
     if info.empty:
         return make_response({
