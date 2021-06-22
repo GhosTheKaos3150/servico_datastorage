@@ -148,7 +148,7 @@ def get_data():
             "what": "on id".upper(),
         }, 404)
 
-    info = info.where(date in info['date'])
+    info = info.where(date in info['date'].str)
     
     if info.empty:
         return make_response({
