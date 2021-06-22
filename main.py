@@ -102,7 +102,7 @@ def get_data():
     json = request.json
     env = json['env']
     _id = json['id']
-    date = json['date']
+    date = dtt.strptime(json['date'], '%Y-%m-%d')
 
     if not type(env) is str:
         return make_response({
@@ -150,7 +150,7 @@ def get_data():
             "what": "on id".upper(),
         }, 404)
 
-    info = info.loc[info['date'].dt.date == dtt.strptime(date, '%Y-%m-%d').date()]
+    info = info.loc[info['date'].dt.date == date]
     
     if info.empty:
         return make_response({
