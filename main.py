@@ -140,6 +140,8 @@ def get_data():
         }, 404)
 
     info = pd.DataFrame(doc['data'])
+    info['date'] = pd.to_datetime(info['date'])
+
     info = info.loc[info['id'] == _id]
     
     if info.empty:
