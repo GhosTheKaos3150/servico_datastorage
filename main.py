@@ -150,7 +150,7 @@ def get_data():
             "what": "on id".upper(),
         }, 404)
 
-    info = info.loc[info['date'].dt.date() == dtt.strptime(date, format='%Y-%m-%d').date()]
+    info = info.loc[info['date'].dt.date == dtt.strptime(date, format='%Y-%m-%d').date()]
     
     if info.empty:
         return make_response({
