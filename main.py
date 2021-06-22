@@ -148,7 +148,7 @@ def get_data():
             "what": "on id".upper(),
         }, 404)
 
-    info = info.loc[date in info['date']]
+    info = info[info['date'].str.findall(date + r'T\d{2}:\d{2}:\d{2}.\d{6}Z')]
     
     if info.empty:
         return make_response({
