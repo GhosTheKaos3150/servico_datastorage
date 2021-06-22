@@ -158,6 +158,7 @@ def get_data():
             "what": "on date".upper(),
         }, 404)
 
+    info['date'] = pd['date'].dt.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
     data = info.to_dict('records')
     print(data)
 
