@@ -131,13 +131,15 @@ def get_data():
         "network": env
     })
 
+    print(doc)
+
     if doc is None:
         return make_response({
             "type": "NOT FOUND",
             "what": "on enviroment".upper(),
         }, 404)
 
-    info = pd.DataFrame(doc['objects'])
+    info = pd.DataFrame(doc['data'])
     info = info.loc[info['id'] == _id]
     
     if info.empty:
@@ -145,19 +147,16 @@ def get_data():
             "response": "NOT FOUND",
             "what": "on id".upper(),
         }, 404)
-    
-    info = info['dates'].tolist()[0]
 
-    data_by_date = pd.DataFrame(info)
-    data_by_date = data_by_date.loc[data_by_date['date'] == date]
+    info = info.loc[info['date'].dt.date() == date]
     
-    if data_by_date.empty:
+    if info.empty:
         return make_response({
             "response": "NOT FOUND",
             "what": "on date".upper(),
         }, 404)
-    
-    data = data_by_date['data'].tolist()[0]
+
+    data = info.to_dict('records')
 
     return make_response({
         "type": "OK",
