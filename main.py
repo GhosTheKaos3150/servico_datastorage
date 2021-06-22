@@ -1,10 +1,11 @@
 import os, shutil
 import os.path as path
 import pymongo
+import re
 from datetime import datetime as dtt
 
 import pandas as pd
-from flask import Flask, request
+from flask import Flask, request, make_response
 
 app = Flask(__name__)
 
@@ -92,10 +93,7 @@ def add_data():
 
             col.update_one(query, update)
 
-    return {
-        'response': 'OK',
-        'status': 200
-    }
+    return make_response('OK', 200)
 
 
 @app.route('/get')
@@ -106,6 +104,25 @@ def get_data():
     _id = json['id']
     date = json['date']
 
+    if not type(env) is str:
+        return make_response({
+            "type": "NOT ACCEPTABLE",
+            "what": "env value is not allowed".upper()
+        }, 406)
+
+    if not type(_id) is str:
+        return make_response({
+            "type": "NOT ACCEPTABLE",
+            "what": "id value is not allowed".upper(),
+        }, 406)
+
+    dt_test = re.search("\d{4}-\d{2}-\d{2}", date)
+    if dt_test is None:
+        return make_response({
+            "type": "NOT ACCEPTABLE",
+            "what": "date format is not allowed".upper(),
+        }, 406)
+
     client = pymongo.MongoClient('mongodb://0.0.0.0:27017')
     database = client['viasoluti-database']
     col = database['data']
@@ -115,23 +132,19 @@ def get_data():
     })
 
     if doc is None:
-        return {
-            "response": "NOT FOUND",
+        return make_response({
+            "type": "NOT FOUND",
             "what": "on enviroment".upper(),
-            "status": 404
-        }
-    else:
-        print(doc)
+        }, 404)
 
     info = pd.DataFrame(doc['objects'])
     info = info.loc[info['id'] == _id]
     
     if info.empty:
-        return {
+        return make_response({
             "response": "NOT FOUND",
             "what": "on id".upper(),
-            "status": 404
-        }
+        }, 404)
     
     info = info['dates'].tolist()[0]
 
@@ -139,19 +152,17 @@ def get_data():
     data_by_date = data_by_date.loc[data_by_date['date'] == date]
     
     if data_by_date.empty:
-        return {
+        return make_response({
             "response": "NOT FOUND",
             "what": "on date".upper(),
-            "status": 404
-        }
+        }, 404)
     
     data = data_by_date['data'].tolist()[0]
 
-    return {
-        "response": "OK",
-        "status": 200,
+    return make_response({
+        "type": "OK",
         "data": data
-    }
+    }, 200)
 
 
 if __name__ == '__main__':
