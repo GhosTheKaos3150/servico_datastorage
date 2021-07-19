@@ -1,14 +1,17 @@
 # servico_datastorage
 
-Este programa utiliza Python 3.9.x
+Este programa utiliza Python 3.8.x
 
 Este programa utiliza o framework FLASK como base.
-Versão FLASK: TODO
+Versão FLASK: 1.1.2
 
 ## Pacotes
-TODO 
++ pymongo
++ re
++ pandas
++ flask
++ flask_cors
 
 # Iniciando a Aplicação
-## Desenvolvimento:
 
-Para iniciar a aplicação no modo de DESENVOLVIMENTO: "python main.py"
++ Para iniciar a aplicação no modo de DESENVOLVIMENTO use `python main.py`
