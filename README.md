@@ -15,3 +15,5 @@ Versão FLASK: 1.1.2
 # Iniciando a Aplicação
 
 + Para iniciar a aplicação no modo de DESENVOLVIMENTO use `python main.py`
++ Porta do Serviço: 8045
++ Porta do BD: 27017
