@@ -12,8 +12,13 @@ Versão FLASK: 1.1.2
 + flask
 + flask_cors
 
-# Iniciando a Aplicação
-
-+ Para iniciar a aplicação no modo de DESENVOLVIMENTO use `python main.py`
+# Portas
 + Porta do Serviço: 8045
 + Porta do BD: 27017
+
+# Iniciando a Aplicação
+
+### Desenvolvimento
++ Para iniciar a aplicação use `python main.py`
+
+### Produção
