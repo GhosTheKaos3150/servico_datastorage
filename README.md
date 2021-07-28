@@ -9,7 +9,7 @@ Versão FLASK: 1.1.2
 + Baixe a Release mais recente da aplicação na aba Releases.
 + Instale a bibilioteca Wheel usando `pip install wheel`
 + É Indicado criar um ambiente virtual. Se desejar, dê preferência a usar o [Anaconda](https://docs.anaconda.com/anaconda/install/index.html)
-+ (Com a venv selecionada) Use o comando pip install servico_recepcao_dados-1.0-py3-none-any.whl
++ (Com a venv selecionada) Use o comando `pip install servico_recepcao_dados-1.0-py3-none-any.whl`
 + Para finalizar, use o seguinte comando para instalar a Release:
 ```
 $ export FLASK_APP=main
