@@ -30,6 +30,13 @@ CORS(app)
 # (...)]
 
 
+@app.route('/')
+def hello():
+    return "<h2>Olá Mundo!</h2><br>" \
+           "Para enviar dados, use a rota <b>\"/add_data\"</b>.<br>" \
+           "Para solicitar dados, use a rota <b>\"/get\"</b>."
+
+
 @app.route('/add_data', methods=['POST'])
 def add_data():
 
