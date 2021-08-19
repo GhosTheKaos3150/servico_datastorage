@@ -1,5 +1,5 @@
-import os, shutil
-import os.path as path
+import os
+
 import pymongo
 import re
 from datetime import datetime as dtt, date as dt
@@ -50,7 +50,12 @@ def add_data():
 
     json = request.json
 
-    client = pymongo.MongoClient('mongodb://0.0.0.0:27017')
+    client = pymongo.MongoClient(
+        host='0.0.0.0',
+        port=8050,
+        username=os.environ['MONGODB_USER'],
+        password=os.environ['MONGODB_PASSWORD']
+    )
     database = client['viasoluti-database']
     col = database['data']
 
