@@ -1,0 +1,8 @@
+README.md
+setup.py
+servico_datastorage.egg-info/PKG-INFO
+servico_datastorage.egg-info/SOURCES.txt
+servico_datastorage.egg-info/dependency_links.txt
+servico_datastorage.egg-info/not-zip-safe
+servico_datastorage.egg-info/requires.txt
+servico_datastorage.egg-info/top_level.txt

@@ -5,7 +5,7 @@ import re
 from datetime import datetime as dtt, date as dt
 
 import pandas as pd
-from flask import Flask, request, make_response
+from flask import Flask, request, make_response, jsonify
 from flask_cors import CORS
 
 app = Flask(__name__)
@@ -28,6 +28,13 @@ CORS(app)
 #     "when": "2021-05-28T20:13:07.323Z"
 # },
 # (...)]
+
+
+@app.route('/')
+def hello():
+    return "<h2>Olá Mundo!</h2><br>" \
+           "Para enviar dados, use a rota <b>\"/add_data\"</b>.<br>" \
+           "Para solicitar dados, use a rota <b>\"/get\"</b>."
 
 
 @app.route('/add_data', methods=['POST'])
