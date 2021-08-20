@@ -59,9 +59,10 @@ def add_data():
 
     client = pymongo.MongoClient(
         host='0.0.0.0',
-        port=8050,
+        port=27017,
         username=os.environ['MONGODB_USER'],
-        password=os.environ['MONGODB_PASSWORD']
+        password=os.environ['MONGODB_PASSWORD'],
+        authSource="test"
     )
     database = client['viasoluti-database']
     col = database['data']
