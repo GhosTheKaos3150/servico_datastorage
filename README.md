@@ -25,7 +25,8 @@ $ flask init-db
 + Instale a biblioteca Waitress usando `pip instal waitress`
 + Usando o comando a seguir, inicie o server:
 ```
-$ waitress-serve --host 0.0.0.0 --port 8045 'main:app'
+$ waitress-serve --port 8045 main:app
+$ waitress-serve --port 8040 main:model_app
 ```
 
 ## Pacotes
