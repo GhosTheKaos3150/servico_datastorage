@@ -14,8 +14,9 @@ Por favor, instale o MongoDB de acordo com o tutorial disponível nesse [guia](h
 Certifique-se de utilizar Usuário e Senha para melhor segurança. É ideal que se configure usuário e senha em variáveis de ambiente para as mesmas serem transparentes a terceiros. Nesse caso, use "MONGODB_USER" e "MONGODB_PASSWORD" como variáveis. Mais informações disponíveis [aqui](https://docs.mongodb.com/manual/tutorial/enable-authentication/) e [aqui](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwjch-GZjYTzAhUvppUCHaZVAVQQFnoECCAQAQ&url=https%3A%2F%2Fmedium.com%2Fmongoaudit%2Fhow-to-enable-authentication-on-mongodb-b9e8a924efac&usg=AOvVaw0sgRt62G8fSeJ8vqnHGAjy).
 
 # Instalando Localmente
++ Baixe a Release mais recente da aplicação na aba Releases. São três arquivos: Source Code, Arquivo .whl e Arquivo cron_train.py
+
 ## Serviço Datastorage
-+ Baixe a Release mais recente da aplicação na aba Releases, ambos Source Code e arquivo .whl
 + Instale a bibilioteca Wheel usando `pip install wheel`
 + É Indicado criar um ambiente virtual. Se desejar, dê preferência a usar o [Anaconda](https://docs.anaconda.com/anaconda/install/index.html)
 + (Com a venv selecionada) Use o comando `pip install servico_datastorage-1.0-py3-none-any.whl`
