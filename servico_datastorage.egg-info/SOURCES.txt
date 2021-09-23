@@ -1,5 +1,8 @@
 README.md
 setup.py
+modelo/__init__.py
+modelo/controller.py
+modelo/handler.py
 servico_datastorage.egg-info/PKG-INFO
 servico_datastorage.egg-info/SOURCES.txt
 servico_datastorage.egg-info/dependency_links.txt

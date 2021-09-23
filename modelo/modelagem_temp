@@ -1,0 +1,110 @@
+import os
+from sklearn.multioutput import MultiOutputRegressor
+from sklearn.linear_model import Ridge, LinearRegression
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from sklearn.svm import SVR
+from sklearn.metrics import *
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import pickle
+
+
+def run(dados: pd.DataFrame, ambiente: str, latencia: int, plot=False, use_validation: bool=False, file_validation: str = "", model_choice: int = 0):
+    dados['date'] = pd.to_datetime(dados['date'], errors='coerce')
+    dados['time'] = dados['date'].values.astype(np.int64)
+
+    percentage_train = 0.5
+    df_feat_train, df_target_train, df_feat_test, df_target_test, df_real_test = splitData(dados, percentage_train)
+    print("Separado")
+
+    model = MultiOutputRegressor(getModel(model_choice)).fit(df_feat_train, df_target_train)
+    print("Treinado")
+
+    if not os.path.exists(f'./model/{ambiente}'):
+        os.mkdir(f'./model/{ambiente}')
+        os.mkdir(f'./model/{ambiente}/imgs')
+
+    pickle.dump(model, open(f'./model/{ambiente}/finalized_model.sav', 'wb'))
+
+    ############ VALIDAÇÃO
+    
+    if use_validation:
+
+        df_interpolacao = interpol(df_feat_test, "x1_start", "y1_start", "z1_start", "t1_start", "x3_end", "y3_end", "z3_end", "t3_end", latencia)
+        print("Interpolado")
+        
+        df_predito = predict(model, df_feat_test, latencia)
+        print("Predito")
+
+        with open(f"./model/{ambiente}/validation_data.txt", "w+", encoding="UTF-8") as file:
+            file.write("Modelo:\n")
+            df_real_full_test = pd.read_csv(f"./datasets/validacao/{file_validation}", usecols=['x', 'y', 'z'])
+            df_real_full_test = df_real_full_test.iloc[-len(df_predito):]
+            df_real_full_test.columns = df_real_test.columns
+            df_real_test = df_real_full_test
+
+            model_indicators = validation(df_real_test, df_predito)
+            (r2_x, r2_y, r2_z), (rmse_x, rmse_y, rmse_z), (mae_x, mae_y, mae_z), (mse_x, mse_y, mse_z) = model_indicators
+            file.write(f"R2: x={r2_x}, y={r2_y}, z={r2_z}\n")
+            file.write(f"RMSE: x={rmse_x}, y={rmse_y}, z={rmse_z}\n")
+            file.write(f"MAE: x={mae_x}, y={mae_y}, z={mae_z}\n")
+            file.write(f"MSE: x={mse_x}, y={mse_y}, z={mse_z}\n")
+
+            file.write("Interpolação:\n")
+            base_line_indicators = validation(df_real_test, df_interpolacao)
+            (r2_x, r2_y, r2_z), (rmse_x, rmse_y, rmse_z), (mae_x, mae_y, mae_z), (
+            mse_x, mse_y, mse_z) = base_line_indicators
+            file.write(f"R2: x={r2_x}, y={r2_y}, z={r2_z}\n")
+            file.write(f"RMSE: x={rmse_x}, y={rmse_y}, z={rmse_z}\n")
+            file.write(f"MAE: x={mae_x}, y={mae_y}, z={mae_z}\n")
+            file.write(f"MSE: x={mse_x}, y={mse_y}, z={mse_z}\n")
+
+    ######################
+
+    if plot:
+        def plot_fig(df_real_test, df_predito):
+            x_real = df_real_test['x2_real']
+            x_previsto = df_predito['x_predito']
+
+            y_real = df_real_test['y2_real']
+            y_previsto = df_predito['y_predito']
+
+            z_real = df_real_test['z2_real']
+            z_previsto = df_predito['z_predito']
+
+            figure, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 9))
+
+            ax1.plot(x_real, x_previsto, 'o')
+            ax1.set_xlabel('X Real')
+            ax1.set_ylabel('X Predito')
+
+            ax2.plot(y_real, y_previsto, 'o')
+            ax2.set_xlabel('Y Real')
+            ax2.set_ylabel('Y Predito')
+
+            ax3.plot(z_real, z_previsto, 'o')
+            ax3.set_xlabel('Z Real')
+            ax3.set_ylabel('Z Predito')
+
+        plot_fig(df_real_test, df_predito)
+        plt.savefig(f"./model/{ambiente}/imgs/reta_{model_choice}.png")  # {model_choice}
+        plt.show()
+        plt.close()
+
+        plot_fig(df_real_test, df_interpolacao)
+        plt.savefig(f"./model/{ambiente}/imgs/reta_interpolacao.png")
+        plt.show()
+        plt.close()
+
+
+    return model_indicators, base_line_indicators
+
+
+if __name__ == "__main__":
+    file = "spiral_data.csv"
+    df = pd.read_csv(f"./datasets/treino/{file}")
+    df['date'] = pd.to_datetime(df['date'], errors='coerce')
+    df['time'] = df['date'].values.astype(np.int64)
+    model_indicators, base_line_indicators = run(df, ambiente=1, plot=True, use_validation=True, file_validation=file , latencia=1, model_choice=0)
+    # plot_compare_models(df)

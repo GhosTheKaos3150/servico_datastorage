@@ -1,12 +1,16 @@
 import os
 
 import pymongo
-import re
 from datetime import datetime as dtt, date as dt
 
+import re
 import pandas as pd
 from flask import Flask, request, make_response, jsonify
 from flask_cors import CORS
+
+# Mmoodel
+import configs
+from modelo import app as model_app
 
 app = Flask(__name__)
 CORS(app)
@@ -58,11 +62,11 @@ def add_data():
     json = request.json
 
     client = pymongo.MongoClient(
-        host='0.0.0.0',
-        port=27017,
+        host=os.environ['MONGODB_HOST'],
+        port=os.environ['MONGODB_PORT'],
         username=os.environ['MONGODB_USER'],
         password=os.environ['MONGODB_PASSWORD'],
-        authSource="test"
+        authSource='admin'
     )
     database = client['viasoluti-database']
     col = database['data']
@@ -140,7 +144,13 @@ def get_data():
 
     date = dt.fromisoformat(date)
 
-    client = pymongo.MongoClient('mongodb://0.0.0.0:27017')
+    client = pymongo.MongoClient(
+        host=os.environ['MONGODB_HOST'],
+        port=os.environ['MONGODB_PORT'],
+        username=os.environ['MONGODB_USER'],
+        password=os.environ['MONGODB_PASSWORD'],
+        authSource='admin'
+    )
     database = client['viasoluti-database']
     col = database['data']
 
@@ -184,3 +194,4 @@ def get_data():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8045)
+    model_app.run(host=configs.host, port=8040)
