@@ -5,12 +5,11 @@ from datetime import datetime as dtt, date as dt
 
 import re
 import pandas as pd
-from flask import Flask, request, make_response, jsonify
+from flask import Flask, request, make_response
 from flask_cors import CORS
 
 # Mmoodel
 import configs
-from modelo import app as model_app
 
 app = Flask(__name__)
 CORS(app)
