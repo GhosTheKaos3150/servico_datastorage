@@ -62,7 +62,7 @@ def add_data():
 
     client = pymongo.MongoClient(
         host=os.environ.get('MONGODB_HOST'),
-        port=os.environ.get('MONGODB_HOST'),
+        port=int(os.environ.get('MONGODB_HOST')),
         username=os.environ.get('MONGODB_HOST'),
         password=os.environ.get('MONGODB_HOST'),
         authSource='admin'
@@ -145,7 +145,7 @@ def get_data():
 
     client = pymongo.MongoClient(
         host=os.environ.get('MONGODB_HOST'),
-        port=os.environ.get('MONGODB_HOST'),
+        port=int(os.environ.get('MONGODB_HOST')),
         username=os.environ.get('MONGODB_HOST'),
         password=os.environ.get('MONGODB_HOST'),
         authSource='admin'
