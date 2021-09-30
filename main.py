@@ -61,10 +61,10 @@ def add_data():
     json = request.json
 
     client = pymongo.MongoClient(
-        host=os.environ['MONGODB_HOST'],
-        port=int(os.environ['MONGODB_PORT']),
-        username=os.environ['MONGODB_USER'],
-        password=os.environ['MONGODB_PASSWORD'],
+        host=os.environ.get('MONGODB_HOST'),
+        port=os.environ.get('MONGODB_HOST'),
+        username=os.environ.get('MONGODB_HOST'),
+        password=os.environ.get('MONGODB_HOST'),
         authSource='admin'
     )
     database = client['viasoluti-database']
@@ -144,10 +144,10 @@ def get_data():
     date = dt.fromisoformat(date)
 
     client = pymongo.MongoClient(
-        host=os.environ['MONGODB_HOST'],
-        port=int(os.environ['MONGODB_PORT']),
-        username=os.environ['MONGODB_USER'],
-        password=os.environ['MONGODB_PASSWORD'],
+        host=os.environ.get('MONGODB_HOST'),
+        port=os.environ.get('MONGODB_HOST'),
+        username=os.environ.get('MONGODB_HOST'),
+        password=os.environ.get('MONGODB_HOST'),
         authSource='admin'
     )
     database = client['viasoluti-database']
