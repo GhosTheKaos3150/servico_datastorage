@@ -61,8 +61,7 @@ def add_data():
     json = request.json
 
     client = pymongo.MongoClient(
-        host=os.environ.get('MONGODB_HOST'),
-        port=int(os.environ.get('MONGODB_HOST')),
+        host=os.environ.get('MONGODB_HOST')+":"+os.environ.get('MONGODB_HOST'),
         username=os.environ.get('MONGODB_HOST'),
         password=os.environ.get('MONGODB_HOST'),
         authSource='admin'
@@ -144,8 +143,7 @@ def get_data():
     date = dt.fromisoformat(date)
 
     client = pymongo.MongoClient(
-        host=os.environ.get('MONGODB_HOST'),
-        port=int(os.environ.get('MONGODB_HOST')),
+        host=os.environ.get('MONGODB_HOST') + ":" + os.environ.get('MONGODB_HOST'),
         username=os.environ.get('MONGODB_HOST'),
         password=os.environ.get('MONGODB_HOST'),
         authSource='admin'
