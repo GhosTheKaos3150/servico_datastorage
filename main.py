@@ -4,6 +4,7 @@ import pymongo
 from datetime import datetime as dtt, date as dt
 
 import re
+import json as j
 import pandas as pd
 from flask import Flask, request, make_response
 from flask_cors import CORS
@@ -59,6 +60,10 @@ def add_data():
     # }
 
     json = request.json
+
+    print(json)
+    with open(f'data/data-{dtt.now()}.json', 'w', encoding='utf-8') as f:
+        j.dump(json, f, ensure_ascii=False, indent=4)
 
     client = pymongo.MongoClient(
         host=os.environ.get('MONGODB_HOST') + ":" + os.environ.get('MONGODB_PORT'),
