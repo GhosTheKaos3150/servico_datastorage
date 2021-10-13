@@ -115,10 +115,17 @@ def add_data():
         doc = col.find_one({"network": network})
         att = dtt.now()
 
-        data = [d for d in data_list if d['network'] == network]
+        data = []
+        for d in data_list:
+            if d['network'] == network and d not in data:
+                data.append(d)
 
         prev_data = doc['data']
         prev_data += data
+
+        prev_data = pd.DataFrame(prev_data)
+        prev_data.drop_duplicates(inplace=True)
+        prev_data = prev_data.to_dict('records')
 
         query = {
             "network": network,
@@ -127,8 +134,7 @@ def add_data():
         update = {'$set': {
             "last_update": att.strftime('%Y-%m-%d %H:%M:%S'),
             "data": prev_data
-        }
-        }
+        }}
 
         col.update_one(query, update)
 
