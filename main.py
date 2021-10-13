@@ -62,14 +62,8 @@ def add_data():
 
     json = request.json
 
-<<<<<<< HEAD
-#    print(json)
-#    with open(f'data/data_{dtt.now().strftime("%Y-%m-%dT%H:%M:%S")}.json', 'w', encoding='utf-8') as f:
-#        j.dump(json, f, ensure_ascii=False, indent=4)
-=======
     with open(f'data/data_{dtt.now().strftime("%Y-%m-%dT%H:%M:%S")}.json', 'w', encoding='utf-8') as f:
         j.dump(json, f, ensure_ascii=False, indent=4)
->>>>>>> bd280a3fc40d74972ef75d511ea9bc759b6f6de1
 
     client = pymongo.MongoClient(
         host=os.environ.get('MONGODB_HOST') + ":" + os.environ.get('MONGODB_PORT'),
