@@ -16,6 +16,7 @@ import configs
 app = Flask(__name__)
 CORS(app)
 
+
 # [
 # {
 #     "_id": "60b14ed3f34a4b001d688a10",
@@ -44,7 +45,6 @@ def hello():
 
 @app.route('/add_data', methods=['POST'])
 def add_data():
-
     # MongoDB - Formato do Documento
     #
     # {
@@ -63,6 +63,8 @@ def add_data():
     json = request.json
 
     # with open(f'data/data_{dtt.now().strftime("%Y-%m-%dT%H:%M:%S")}.json', 'w', encoding='utf-8') as f:
+    #      if not os.path.exists('data'):
+    #         os.mkdir("data")
     #     j.dump(json, f, ensure_ascii=False, indent=4)
 
     client = pymongo.MongoClient(
@@ -123,19 +125,23 @@ def add_data():
         }
 
         update = {'$set': {
-                "last_update": att.strftime('%Y-%m-%d %H:%M:%S'),
-                "data": prev_data
-            }
+            "last_update": att.strftime('%Y-%m-%d %H:%M:%S'),
+            "data": prev_data
+        }
         }
 
         col.update_one(query, update)
 
-    return make_response('OK', 200)
+    return make_response({
+        'type': 'OK',
+        'status': 200,
+        "len_data": len(data_list),
+        "len_envs": len(ntwk_list)
+    })
 
 
 @app.route('/get')
 def get_data():
-    
     json = request.json
     env = json['env']
     _id = json['id']
@@ -185,7 +191,7 @@ def get_data():
     info['date'] = pd.to_datetime(info['date'])
 
     info = info.loc[info['id'] == _id]
-    
+
     if info.empty:
         return make_response({
             "response": "NOT FOUND",
@@ -193,7 +199,7 @@ def get_data():
         }, 404)
 
     info = info.loc[info['date'].dt.date == date]
-    
+
     if info.empty:
         return make_response({
             "response": "NOT FOUND",
@@ -206,13 +212,13 @@ def get_data():
 
     return make_response({
         "type": "OK",
-        "data": data
+        "data": data,
+        "len": len(data)
     }, 200)
 
 
 @app.route('/getall')
 def getall_data():
-
     json = request.json
     env = json['env']
     date = json['date']
@@ -274,6 +280,44 @@ def getall_data():
 
     return make_response({
         "type": "OK",
+        "data": data,
+        "len": len(data)
+    }, 200)
+
+
+@app.route("/rmdup")
+def remove_duplicates():
+    json = request.json
+    env = json['env']
+
+    client = pymongo.MongoClient(
+        host=os.environ.get('MONGODB_HOST') + ":" + os.environ.get('MONGODB_PORT'),
+        username=os.environ.get('MONGODB_USER'),
+        password=os.environ.get('MONGODB_PASSWORD'),
+        authSource='admin'
+    )
+    database = client['viasoluti-database']
+    col = database['data']
+    doc = col.find_one({"network": env})
+
+    data = pd.DataFrame(doc['data'])
+    data.drop_duplicates(inplace=True)
+    data = data.to_dict('records')
+
+    query = {
+        "network": env,
+    }
+
+    update = {'$set': {
+        "data": data
+    }
+    }
+
+    col.update_one(query, update)
+
+    return make_response({
+        "type": "OK",
+        "len": len(data),
         "data": data
     }, 200)
 
