@@ -210,5 +210,73 @@ def get_data():
     }, 200)
 
 
+@app.route('/getall')
+def getall_data():
+
+    json = request.json
+    env = json['env']
+    date = json['date']
+
+    if not type(env) is str:
+        return make_response({
+            "type": "NOT ACCEPTABLE",
+            "what": "env value is not allowed".upper()
+        }, 406)
+
+    dt_test = re.search("\d{4}-\d{2}-\d{2}", date)
+    if dt_test is None:
+        return make_response({
+            "type": "NOT ACCEPTABLE",
+            "what": "date format is not allowed".upper(),
+        }, 406)
+
+    date = dt.fromisoformat(date)
+
+    client = pymongo.MongoClient(
+        host=os.environ.get('MONGODB_HOST') + ":" + os.environ.get('MONGODB_PORT'),
+        username=os.environ.get('MONGODB_USER'),
+        password=os.environ.get('MONGODB_PASSWORD'),
+        authSource='admin'
+    )
+    database = client['viasoluti-database']
+    col = database['data']
+
+    doc = col.find_one({
+        "network": env
+    })
+
+    if doc is None:
+        return make_response({
+            "type": "NOT FOUND",
+            "what": "on enviroment".upper(),
+        }, 404)
+
+    info = pd.DataFrame(doc['data'])
+    info['date'] = pd.to_datetime(info['date'])
+
+    if info.empty:
+        return make_response({
+            "response": "NOT FOUND",
+            "what": "on id".upper(),
+        }, 404)
+
+    info = info.loc[info['date'].dt.date == date]
+
+    if info.empty:
+        return make_response({
+            "response": "NOT FOUND",
+            "what": "on date".upper(),
+        }, 404)
+
+    info.sort_values(by='date', inplace=True)
+    info['date'] = info['date'].dt.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+    data = info.to_dict('records')
+
+    return make_response({
+        "type": "OK",
+        "data": data
+    }, 200)
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8045)
