@@ -1,0 +1,37 @@
+INFO:waitress:Serving on http://0.0.0.0:8045
+INFO:waitress:Serving on http://0.0.0.0:8045
+INFO:waitress:Serving on http://0.0.0.0:8045
+ERROR:main:Exception on /add_data [POST]
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.8/dist-packages/flask/app.py", line 2070, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/usr/local/lib/python3.8/dist-packages/flask/app.py", line 1515, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/usr/local/lib/python3.8/dist-packages/flask_cors/extension.py", line 165, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+  File "/usr/local/lib/python3.8/dist-packages/flask/app.py", line 1513, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/usr/local/lib/python3.8/dist-packages/flask/app.py", line 1499, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**req.view_args)
+  File "/servico_datastorage/main.py", line 64, in add_data
+    host=os.environ['MONGODB_HOST'],
+  File "/usr/lib/python3.8/os.py", line 675, in __getitem__
+    raise KeyError(key) from None
+KeyError: 'MONGODB_HOST'
+ERROR:main:Exception on /add_data [POST]
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.8/dist-packages/flask/app.py", line 2070, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/usr/local/lib/python3.8/dist-packages/flask/app.py", line 1515, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/usr/local/lib/python3.8/dist-packages/flask_cors/extension.py", line 165, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+  File "/usr/local/lib/python3.8/dist-packages/flask/app.py", line 1513, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/usr/local/lib/python3.8/dist-packages/flask/app.py", line 1499, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**req.view_args)
+  File "/servico_datastorage/main.py", line 64, in add_data
+    host=os.environ['MONGODB_HOST'],
+  File "/usr/lib/python3.8/os.py", line 675, in __getitem__
+    raise KeyError(key) from None
+KeyError: 'MONGODB_HOST'
