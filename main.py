@@ -62,8 +62,10 @@ def add_data():
 
     json = request.json
 
-    # with open(f'data/data_{dtt.now().strftime("%Y-%m-%dT%H:%M:%S")}.json', 'w', encoding='utf-8') as f:
-    #     j.dump(json, f, ensure_ascii=False, indent=4)
+    with open(f'data/data_{dtt.now().strftime("%Y-%m-%dT%H:%M:%S")}.json', 'w', encoding='utf-8') as f:
+        if not os.path.exists('data'):
+            os.mkdir("data")
+        j.dump(json, f, ensure_ascii=False, indent=4)
 
     client = pymongo.MongoClient(
         host=os.environ.get('MONGODB_HOST') + ":" + os.environ.get('MONGODB_PORT'),
@@ -108,6 +110,8 @@ def add_data():
         else:
 
             data_list.append(data)
+
+    print(data_list)
 
     for network in ntwk_list:
         doc = col.find_one({"network": network})
@@ -274,7 +278,7 @@ def getall_data():
 
     return make_response({
         "type": "OK",
-        "data": data
+        "data": len(data)
     }, 200)
 
 
