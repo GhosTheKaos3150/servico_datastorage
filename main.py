@@ -79,6 +79,8 @@ def add_data():
         att = dtt.now()
         d_value = value['value']
 
+
+
         data = d_value['value']
         date = dtt.strptime(d_value['when'], '%Y-%m-%dT%H:%M:%S.%fZ')
         network = d_value['network']
@@ -185,6 +187,7 @@ def get_data():
             "what": "on date".upper(),
         }, 404)
 
+    info.sort_values(by='date', inplace=True)
     info['date'] = info['date'].dt.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
     data = info.to_dict('records')
 
