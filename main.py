@@ -2,6 +2,7 @@ import os
 
 import pymongo
 from datetime import datetime as dtt, date as dt
+from threading import Thread
 
 import re
 import json as j
@@ -61,9 +62,14 @@ def add_data():
 
     json = request.json
 
+<<<<<<< HEAD
 #    print(json)
 #    with open(f'data/data_{dtt.now().strftime("%Y-%m-%dT%H:%M:%S")}.json', 'w', encoding='utf-8') as f:
 #        j.dump(json, f, ensure_ascii=False, indent=4)
+=======
+    with open(f'data/data_{dtt.now().strftime("%Y-%m-%dT%H:%M:%S")}.json', 'w', encoding='utf-8') as f:
+        j.dump(json, f, ensure_ascii=False, indent=4)
+>>>>>>> bd280a3fc40d74972ef75d511ea9bc759b6f6de1
 
     client = pymongo.MongoClient(
         host=os.environ.get('MONGODB_HOST') + ":" + os.environ.get('MONGODB_PORT'),
@@ -74,20 +80,25 @@ def add_data():
     database = client['viasoluti-database']
     col = database['data']
 
+    ntwk_list = []
+    data_list = []
+
     for value in json:
         device_id = value['deviceId']
         att = dtt.now()
         d_value = value['value']
 
-
-
         data = d_value['value']
         date = dtt.strptime(d_value['when'], '%Y-%m-%dT%H:%M:%S.%fZ')
         network = d_value['network']
 
+        if not network in ntwk_list:
+            ntwk_list.append(network)
+
         # adicionando date e id ao data
         data['date'] = date.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         data['id'] = device_id
+        data['network'] = network
 
         doc = col.find_one({"network": network})
 
@@ -102,20 +113,28 @@ def add_data():
 
         else:
 
-            prev_data = doc['data']
-            prev_data.append(data)
+            data_list.append(data)
 
-            query = {
-                "network": network,
+    for network in ntwk_list:
+        doc = col.find_one({"network": network})
+        att = dtt.now()
+
+        data = [d for d in data_list if d['network'] == network]
+
+        prev_data = doc['data']
+        prev_data += data
+
+        query = {
+            "network": network,
+        }
+
+        update = {'$set': {
+                "last_update": att.strftime('%Y-%m-%d %H:%M:%S'),
+                "data": prev_data
             }
+        }
 
-            update = {'$set': {
-                    "last_update": att.strftime('%Y-%m-%d %H:%M:%S'),
-                    "data": prev_data
-                }
-            }
-
-            col.update_one(query, update)
+        col.update_one(query, update)
 
     return make_response('OK', 200)
 
