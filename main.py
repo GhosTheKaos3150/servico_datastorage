@@ -122,12 +122,12 @@ def add_data():
             if d['network'] == network and d not in data:
                 data.append(d)
 
+        data = pd.DataFrame(data)
+        data.drop_duplicates(inplace=True)
+        data = data.to_dict('records')
+
         prev_data = doc['data']
         prev_data += data
-
-        prev_data = pd.DataFrame(prev_data)
-        prev_data.drop_duplicates(inplace=True)
-        prev_data = prev_data.to_dict('records')
 
         query = {
             "network": network,
