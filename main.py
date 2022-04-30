@@ -1,17 +1,18 @@
 import os
 
 import pymongo
-from datetime import datetime as dtt, date as dt
+from datetime import datetime as dtt, date as dt, timedelta as td
 from threading import Thread
 
 import re
 import json as j
 import pandas as pd
-from flask import Flask, request, make_response
+from flask import Flask, request, make_response, abort
 from flask_cors import CORS
 
 # Mmoodel
 import configs
+from util import db_access as uda
 
 app = Flask(__name__)
 CORS(app)
@@ -43,12 +44,57 @@ def hello():
            "Para solicitar dados, use a rota <b>\"/get\"</b>."
 
 
-@app.route('/add_data', methods=['POST'])
-def add_data():
-    # MongoDB - Formato do Documento
+@app.route("/getdata/train", methods=["POST"])
+def get_data_train():
+    # Expected
+    # {
+    #     "network": "<network>",
+    #     "gemini": "<gemini>",
+    #     "months": "<months>",
+    # }
+    data = request.json
+
+    if not "network" in data.keys():
+        abort(400)
+
+    if not "gemini" in data.keys():
+        abort(400)
+
+    if not "months" in data.keys():
+        abort(400)
+
+    end = dtt.now().strftime(uda.date_format())
+    init = (dtt.now() - td(weeks=4*data["months"])).strftime(uda.date_format())
+
+    print(init, end)
+
+    formated_data = uda.get_data_formated(data["network"],data["gemini"], init, end, True)
+
+    return make_response({"data": formated_data}, 200)
+
+
+@app.route("/setdata/predict", methods=["POST"])
+def set_data_predict():
+    data = request.json
+
+    if not "env" in data.keys():
+        abort(400)
+
+    if not "gid" in data.keys():
+        abort(400)
+
+    if not "pred" in data.keys():
+        abort(400)
+
+    env = data["env"]
+    gid = data["gid"]
+    prediction = data["pred"]
+
+    #     # MongoDB - Formato do Documento
     #
     # {
     #   "network": <network>,
+    #   "gemini": <gemini>,
     #   "last_update": <att>,
     #   "data": [{
     #       "id": <id>,
@@ -60,275 +106,280 @@ def add_data():
     #   }, (...) ]
     # }
 
-    json = request.json
-
-#    with open(f'data/data_{dtt.now().strftime("%Y-%m-%dT%H:%M:%S")}.json', 'w', encoding='utf-8') as f:
-#        if not os.path.exists('data'):
-#            os.mkdir("data")
-#        j.dump(json, f, ensure_ascii=False, indent=4)
-
     client = pymongo.MongoClient(
-        host=os.environ.get('MONGODB_HOST') + ":" + os.environ.get('MONGODB_PORT'),
-        username=os.environ.get('MONGODB_USER'),
-        password=os.environ.get('MONGODB_PASSWORD'),
+        host="0.0.0.0",
+        username="admin",
+        password="admin",
         authSource='admin'
     )
-    database = client['viasoluti-database']
+    database = client['indoorsense']
     col = database['data']
 
-    ntwk_list = []
-    data_list = []
-
-    for value in json:
-        device_id = value['deviceId']
-        att = dtt.now()
-        d_value = value['value']
-
-        data = d_value['value']
-        date = dtt.strptime(d_value['when'], '%Y-%m-%dT%H:%M:%S.%fZ')
-        network = d_value['network']
-
-        if not network in ntwk_list:
-            ntwk_list.append(network)
-
-        # adicionando date e id ao data
-        data['date'] = date.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-        data['id'] = device_id
-        data['network'] = network
-
-        doc = col.find_one({"network": network})
-
-        if doc is None:
-            col.insert_one(
-                {
-                    "network": network,
-                    "last_update": att.strftime('%Y-%m-%d %H:%M:%S'),
-                    "data": [data]
-                }
-            )
-
-        else:
-
-            data_list.append(data)
-
-#    print(data_list)
-
-    for network in ntwk_list:
-        doc = col.find_one({"network": network})
-        att = dtt.now()
-
-        data = []
-        for d in data_list:
-            if d['network'] == network and d not in data:
-                data.append(d)
-
-        data = pd.DataFrame(data)
-        data.drop_duplicates(inplace=True)
-        data = data.to_dict('records')
-
-        prev_data = doc['data']
-        prev_data += data
-
-        query = {
-            "network": network,
-        }
-
-        update = {'$set': {
-            "last_update": att.strftime('%Y-%m-%d %H:%M:%S'),
-            "data": prev_data
-        }}
-
-        col.update_one(query, update)
-
-    return make_response({
-        'type': 'OK',
-        'status': 200,
-        "len_data": len(data_list),
-        "len_envs": len(ntwk_list)
-    })
-
-
-@app.route('/get')
-def get_data():
-    json = request.json
-    env = json['env']
-    _id = json['id']
-    date = json['date']
-
-    if not type(env) is str:
-        return make_response({
-            "type": "NOT ACCEPTABLE",
-            "what": "env value is not allowed".upper()
-        }, 406)
-
-    if not type(_id) is str:
-        return make_response({
-            "type": "NOT ACCEPTABLE",
-            "what": "id value is not allowed".upper(),
-        }, 406)
-
-    dt_test = re.search("\d{4}-\d{2}-\d{2}", date)
-    if dt_test is None:
-        return make_response({
-            "type": "NOT ACCEPTABLE",
-            "what": "date format is not allowed".upper(),
-        }, 406)
-
-    date = dt.fromisoformat(date)
-
-    client = pymongo.MongoClient(
-        host=os.environ.get('MONGODB_HOST') + ":" + os.environ.get('MONGODB_PORT'),
-        username=os.environ.get('MONGODB_USER'),
-        password=os.environ.get('MONGODB_PASSWORD'),
-        authSource='admin'
-    )
-    database = client['viasoluti-database']
-    col = database['data']
-
-    doc = col.find_one({
-        "network": env
-    })
+    doc = col.find_one({"gemini": gid, "network": env})
 
     if doc is None:
-        return make_response({
-            "type": "NOT FOUND",
-            "what": "on enviroment".upper(),
-        }, 404)
+        col.insert_one({"gemini": gid, "network": env, "data": []})
+        doc = col.find_one({"gemini": gid, "network": env})
+    
+    doc = doc["data"]
 
-    info = pd.DataFrame(doc['data'])
-    info['date'] = pd.to_datetime(info['date'])
+    col.update_one({"gemini": gid, "network": env}, {"$set": {"data": doc+prediction}})
+    doc = col.find_one({"gemini": gid, "network": env})
 
-    info = info.loc[info['id'] == _id]
-
-    if info.empty:
-        return make_response({
-            "response": "NOT FOUND",
-            "what": "on id".upper(),
-        }, 404)
-
-    info = info.loc[info['date'].dt.date == date]
-
-    if info.empty:
-        return make_response({
-            "response": "NOT FOUND",
-            "what": "on date".upper(),
-        }, 404)
-
-    info.sort_values(by='date', inplace=True)
-    info['date'] = info['date'].dt.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-    data = info.to_dict('records')
-
-    return make_response({
-        "type": "OK",
-        "data": data,
-        "len": len(data)
-    }, 200)
+    return make_response({"response": "OK"}, 200)
 
 
-@app.route('/getall')
-def getall_data():
-    json = request.json
-    env = json['env']
-    date = json['date']
+# @app.route('/add_data', methods=['POST'])
+# def add_data():
+#     # MongoDB - Formato do Documento
+#     #
+#     # {
+#     #   "network": <network>,
+#     #   "last_update": <att>,
+#     #   "data": [{
+#     #       "id": <id>,
+#     #       "x": 0,
+#     #       "y": 0,
+#     #       "z": 0,
+#     #       "date": <date>
+#     #    }, (...) ]
+#     #   }, (...) ]
+#     # }
 
-    if not type(env) is str:
-        return make_response({
-            "type": "NOT ACCEPTABLE",
-            "what": "env value is not allowed".upper()
-        }, 406)
+#     json = request.json
 
-    dt_test = re.search("\d{4}-\d{2}-\d{2}", date)
-    if dt_test is None:
-        return make_response({
-            "type": "NOT ACCEPTABLE",
-            "what": "date format is not allowed".upper(),
-        }, 406)
+# #    with open(f'data/data_{dtt.now().strftime("%Y-%m-%dT%H:%M:%S")}.json', 'w', encoding='utf-8') as f:
+# #        if not os.path.exists('data'):
+# #            os.mkdir("data")
+# #        j.dump(json, f, ensure_ascii=False, indent=4)
 
-    date = dt.fromisoformat(date)
+#     client = pymongo.MongoClient(
+#         host=os.environ.get('MONGODB_HOST') + ":" + os.environ.get('MONGODB_PORT'),
+#         username=os.environ.get('MONGODB_USER'),
+#         password=os.environ.get('MONGODB_PASSWORD'),
+#         authSource='admin'
+#     )
+#     database = client['viasoluti-database']
+#     col = database['data']
 
-    client = pymongo.MongoClient(
-        host=os.environ.get('MONGODB_HOST') + ":" + os.environ.get('MONGODB_PORT'),
-        username=os.environ.get('MONGODB_USER'),
-        password=os.environ.get('MONGODB_PASSWORD'),
-        authSource='admin'
-    )
-    database = client['viasoluti-database']
-    col = database['data']
+#     ntwk_list = []
+#     data_list = []
 
-    doc = col.find_one({
-        "network": env
-    })
+#     for value in json:
+#         device_id = value['deviceId']
+#         att = dtt.now()
+#         d_value = value['value']
 
-    if doc is None:
-        return make_response({
-            "type": "NOT FOUND",
-            "what": "on enviroment".upper(),
-        }, 404)
+#         data = d_value['value']
+#         date = dtt.strptime(d_value['when'], '%Y-%m-%dT%H:%M:%S.%fZ')
+#         network = d_value['network']
 
-    info = pd.DataFrame(doc['data'])
-    info['date'] = pd.to_datetime(info['date'])
+#         if not network in ntwk_list:
+#             ntwk_list.append(network)
 
-    if info.empty:
-        return make_response({
-            "response": "NOT FOUND",
-            "what": "on id".upper(),
-        }, 404)
+#         # adicionando date e id ao data
+#         data['date'] = date.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+#         data['id'] = device_id
+#         data['network'] = network
 
-    info = info.loc[info['date'].dt.date == date]
+#         doc = col.find_one({"network": network})
 
-    if info.empty:
-        return make_response({
-            "response": "NOT FOUND",
-            "what": "on date".upper(),
-        }, 404)
+#         if doc is None:
+#             col.insert_one(
+#                 {
+#                     "network": network,
+#                     "last_update": att.strftime('%Y-%m-%d %H:%M:%S'),
+#                     "data": [data]
+#                 }
+#             )
 
-    info.sort_values(by='date', inplace=True)
-    info['date'] = info['date'].dt.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-    data = info.to_dict('records')
+#         else:
 
-    return make_response({
-        "type": "OK",
-        "data": data,
-        "len": len(data)
-    }, 200)
+#             data_list.append(data)
+
+# #    print(data_list)
+
+#     for network in ntwk_list:
+#         doc = col.find_one({"network": network})
+#         att = dtt.now()
+
+#         data = []
+#         for d in data_list:
+#             if d['network'] == network and d not in data:
+#                 data.append(d)
+
+#         data = pd.DataFrame(data)
+#         data.drop_duplicates(inplace=True)
+#         data = data.to_dict('records')
+
+#         prev_data = doc['data']
+#         prev_data += data
+
+#         query = {
+#             "network": network,
+#         }
+
+#         update = {'$set': {
+#             "last_update": att.strftime('%Y-%m-%d %H:%M:%S'),
+#             "data": prev_data
+#         }}
+
+#         col.update_one(query, update)
+
+#     return make_response({
+#         'type': 'OK',
+#         'status': 200,
+#         "len_data": len(data_list),
+#         "len_envs": len(ntwk_list)
+#     })
 
 
-@app.route("/rmdup")
-def remove_duplicates():
-    json = request.json
-    env = json['env']
+# @app.route('/get')
+# def get_data():
+#     json = request.json
+#     env = json['env']
+#     _id = json['id']
+#     date = json['date']
 
-    client = pymongo.MongoClient(
-        host=os.environ.get('MONGODB_HOST') + ":" + os.environ.get('MONGODB_PORT'),
-        username=os.environ.get('MONGODB_USER'),
-        password=os.environ.get('MONGODB_PASSWORD'),
-        authSource='admin'
-    )
-    database = client['viasoluti-database']
-    col = database['data']
-    doc = col.find_one({"network": env})
+#     if not type(env) is str:
+#         return make_response({
+#             "type": "NOT ACCEPTABLE",
+#             "what": "env value is not allowed".upper()
+#         }, 406)
 
-    data = pd.DataFrame(doc['data'])
-    data.drop_duplicates(inplace=True)
-    data = data.to_dict('records')
+#     if not type(_id) is str:
+#         return make_response({
+#             "type": "NOT ACCEPTABLE",
+#             "what": "id value is not allowed".upper(),
+#         }, 406)
 
-    query = {
-        "network": env,
-    }
+#     dt_test = re.search("\d{4}-\d{2}-\d{2}", date)
+#     if dt_test is None:
+#         return make_response({
+#             "type": "NOT ACCEPTABLE",
+#             "what": "date format is not allowed".upper(),
+#         }, 406)
 
-    update = {'$set': {
-        "data": data
-    }
-    }
+#     date = dt.fromisoformat(date)
 
-    col.update_one(query, update)
+#     client = pymongo.MongoClient(
+#         host=os.environ.get('MONGODB_HOST') + ":" + os.environ.get('MONGODB_PORT'),
+#         username=os.environ.get('MONGODB_USER'),
+#         password=os.environ.get('MONGODB_PASSWORD'),
+#         authSource='admin'
+#     )
+#     database = client['viasoluti-database']
+#     col = database['data']
 
-    return make_response({
-        "type": "OK",
-        "len": len(data),
-        "data": data
-    }, 200)
+#     doc = col.find_one({
+#         "network": env
+#     })
 
+#     if doc is None:
+#         return make_response({
+#             "type": "NOT FOUND",
+#             "what": "on enviroment".upper(),
+#         }, 404)
+
+#     info = pd.DataFrame(doc['data'])
+#     info['date'] = pd.to_datetime(info['date'])
+
+#     info = info.loc[info['id'] == _id]
+
+#     if info.empty:
+#         return make_response({
+#             "response": "NOT FOUND",
+#             "what": "on id".upper(),
+#         }, 404)
+
+#     info = info.loc[info['date'].dt.date == date]
+
+#     if info.empty:
+#         return make_response({
+#             "response": "NOT FOUND",
+#             "what": "on date".upper(),
+#         }, 404)
+
+#     info.sort_values(by='date', inplace=True)
+#     info['date'] = info['date'].dt.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+#     data = info.to_dict('records')
+
+#     return make_response({
+#         "type": "OK",
+#         "data": data,
+#         "len": len(data)
+#     }, 200)
+
+
+# @app.route('/getall')
+# def getall_data():
+#     json = request.json
+    
+#     gid = json['gid']
+#     env = json['env']
+#     date = json['date']
+
+#     if not type(env) is str:
+#         return make_response({
+#             "type": "NOT ACCEPTABLE",
+#             "what": "env value is not allowed".upper()
+#         }, 406)
+
+#     dt_test = re.search("\d{4}-\d{2}-\d{2}", date)
+#     if dt_test is None:
+#         return make_response({
+#             "type": "NOT ACCEPTABLE",
+#             "what": "date format is not allowed".upper(),
+#         }, 406)
+
+#     date = dt.fromisoformat(date)
+
+#     client = pymongo.MongoClient(
+#         host=os.environ.get('MONGODB_HOST') + ":" + os.environ.get('MONGODB_PORT'),
+#         username=os.environ.get('MONGODB_USER'),
+#         password=os.environ.get('MONGODB_PASSWORD'),
+#         authSource='admin'
+#     )
+
+#     database = client['indoorsense-ia']
+#     col = database['data']
+
+#     doc = col.find_one({
+#         "network": env
+#     })
+
+#     if doc is None:
+#         return make_response({
+#             "type": "NOT FOUND",
+#             "what": "on enviroment".upper(),
+#         }, 404)
+
+#     info = pd.DataFrame(doc['data'])
+#     info['date'] = pd.to_datetime(info['date'])
+
+#     if info.empty:
+#         return make_response({
+#             "response": "NOT FOUND",
+#             "what": "on id".upper(),
+#         }, 404)
+
+#     info = info.loc[info['date'].dt.date == date]
+
+#     if info.empty:
+#         return make_response({
+#             "response": "NOT FOUND",
+#             "what": "on date".upper(),
+#         }, 404)
+
+#     info.sort_values(by='date', inplace=True)
+#     info['date'] = info['date'].dt.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+#     data = info.to_dict('records')
+
+#     return make_response({
+#         "type": "OK",
+#         "data": data,
+#         "len": len(data)
+#     }, 200)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8045)
