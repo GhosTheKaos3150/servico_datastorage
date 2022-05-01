@@ -50,7 +50,7 @@ def get_data_train():
     # {
     #     "network": "<network>",
     #     "gemini": "<gemini>",
-    #     "months": "<months>",
+    #     "days": "<days>",
     # }
     data = request.json
 
@@ -60,11 +60,11 @@ def get_data_train():
     if not "gemini" in data.keys():
         abort(400)
 
-    if not "months" in data.keys():
+    if not "days" in data.keys():
         abort(400)
 
     end = dtt.now().strftime(uda.date_format())
-    init = (dtt.now() - td(weeks=4*data["months"])).strftime(uda.date_format())
+    init = (dtt.now() - td(days=data["days"])).strftime(uda.date_format())
 
     print(init, end)
 
@@ -113,7 +113,7 @@ def set_data_predict():
         authSource='admin'
     )
     database = client['indoorsense']
-    col = database['data']
+    col = database['pred']
 
     doc = col.find_one({"gemini": gid, "network": env})
 
