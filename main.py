@@ -108,8 +108,8 @@ def set_data_predict():
 
     client = pymongo.MongoClient(
         host="0.0.0.0",
-        username="admin",
-        password="admin",
+        username="indoorsense",
+        password="12345678",
         authSource='admin'
     )
     database = client['indoorsense']
@@ -127,6 +127,33 @@ def set_data_predict():
     doc = col.find_one({"gemini": gid, "network": env})
 
     return make_response({"response": "OK"}, 200)
+
+
+@app.route("/getdata/predict", methods=["POST"])
+def get_data_predict():
+    data = request.json
+
+    if not "env" in data.keys():
+        abort(400)
+
+    if not "gid" in data.keys():
+        abort(400)
+
+    env = data["env"]
+    gid = data["gid"]
+
+    client = pymongo.MongoClient(
+        host="0.0.0.0",
+        username="indoorsense",
+        password="12345678",
+        authSource='admin'
+    )
+    database = client['indoorsense']
+    col = database['pred']
+
+    doc = col.find_one({"gemini": gid, "network": env})
+
+    return make_response({"response": "OK", "data": doc["data"]}, 200)
 
 
 # @app.route('/add_data', methods=['POST'])
