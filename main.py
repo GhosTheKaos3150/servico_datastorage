@@ -1,3 +1,4 @@
+from lib2to3.pgen2 import grammar
 import os
 
 import pymongo
@@ -70,7 +71,20 @@ def get_data_train():
 
     formated_data = uda.get_data_formated(data["network"],data["gemini"], init, end, True)
 
-    return make_response({"data": formated_data}, 200)
+    if not formated_data:
+        return make_response({"erro": "erro"}, 404)
+
+    df = pd.DataFrame(formated_data)
+
+    df["date"] = pd.to_datetime(df["date"])
+
+    df['time'] = df['date'].diff()
+    df.loc[0, 'time'] = td(seconds=0)
+    df['time'] = df['time'].apply(lambda a: a.total_seconds() if not type(a) is float else a)
+
+    latency = round(df['time'].diff().fillna(0).mean(), 4)
+
+    return make_response({"data": formated_data, 'latency': latency}, 200)
 
 
 @app.route("/setdata/predict", methods=["POST"])
@@ -83,11 +97,15 @@ def set_data_predict():
     if not "gid" in data.keys():
         abort(400)
 
+    if not "device" in data.keys():
+        abort(400)
+
     if not "pred" in data.keys():
         abort(400)
 
     env = data["env"]
     gid = data["gid"]
+    device = data["device"]
     prediction = data["pred"]
 
     #     # MongoDB - Formato do Documento
@@ -107,10 +125,10 @@ def set_data_predict():
     # }
 
     client = pymongo.MongoClient(
-        host="0.0.0.0",
-        username="indoorsense",
-        password="12345678",
-        authSource='admin'
+        host=os.environ.get("MONGODB_HOST"),
+        username=os.environ.get("MONGODB_USER"),
+        password=os.environ.get("MONGODB_PASSWORD"),
+        authSource="indoorsense"
     )
     database = client['indoorsense']
     col = database['pred']
@@ -118,7 +136,7 @@ def set_data_predict():
     doc = col.find_one({"gemini": gid, "network": env})
 
     if doc is None:
-        col.insert_one({"gemini": gid, "network": env, "data": []})
+        col.insert_one({"device": device, "gemini": gid, "network": env, "data": []})
         doc = col.find_one({"gemini": gid, "network": env})
     
     doc = doc["data"]
@@ -143,10 +161,10 @@ def get_data_predict():
     gid = data["gid"]
 
     client = pymongo.MongoClient(
-        host="0.0.0.0",
-        username="indoorsense",
-        password="12345678",
-        authSource='admin'
+        host=os.environ.get("MONGODB_HOST"),
+        username=os.environ.get("MONGODB_USER"),
+        password=os.environ.get("MONGODB_PASSWORD"),
+        authSource="indoorsense"
     )
     database = client['indoorsense']
     col = database['pred']
@@ -154,6 +172,7 @@ def get_data_predict():
     doc = col.find_one({"gemini": gid, "network": env})
 
     return make_response({"response": "OK", "data": doc["data"]}, 200)
+
 
 
 # @app.route('/add_data', methods=['POST'])
