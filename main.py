@@ -153,7 +153,7 @@ def get_data_predict():
 
     doc = col.find_one({"gemini": gid, "network": env})
 
-    return make_response({"response": "OK", "data": doc["data"]}, 200)
+    return make_response({"response": "OK", "data": [] if doc is None else doc["data"]}, 200)
 
 
 # @app.route('/add_data', methods=['POST'])
