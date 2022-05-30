@@ -82,7 +82,12 @@ def get_data_train():
     df.loc[0, 'time'] = td(seconds=0)
     df['time'] = df['time'].apply(lambda a: a.total_seconds() if not type(a) is float else a)
 
+    print(df["time"])
+
     latency = round(df['time'].diff().fillna(0).mean(), 4)
+
+    if latency <= 0:
+        latency = df['time'].diff().fillna(0).mean()
 
     return make_response({"data": formated_data, 'latency': latency}, 200)
 
@@ -128,7 +133,7 @@ def set_data_predict():
         host=os.environ.get("MONGODB_HOST"),
         username=os.environ.get("MONGODB_USER"),
         password=os.environ.get("MONGODB_PASSWORD"),
-        authSource="indoorsense"
+        authSource="admin"
     )
     database = client['indoorsense']
     col = database['pred']
@@ -164,7 +169,7 @@ def get_data_predict():
         host=os.environ.get("MONGODB_HOST"),
         username=os.environ.get("MONGODB_USER"),
         password=os.environ.get("MONGODB_PASSWORD"),
-        authSource="indoorsense"
+        authSource="admin"
     )
     database = client['indoorsense']
     col = database['pred']
